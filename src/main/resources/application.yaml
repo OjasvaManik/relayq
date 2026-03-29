@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: relayq
+  datasource:
+    url: jdbc:postgresql://localhost:5432/relayq-db
+    username: relayq-user
+    password: relayq-pass
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+  flyway:
+    enabled: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  app:
+    jwtSecret: 86zL7EdVlaa5YxZh0CwBVp0KCKYtszxgs5ouocpKMULkZZxHuMrQ0nTHRcrOEPyZoF93EPBUqr14puL/w23PWQ==
