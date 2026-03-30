@@ -1,6 +1,8 @@
 spring:
   application:
     name: relayq
+  config:
+    import: classpath:secrets.yaml
   datasource:
     url: jdbc:postgresql://localhost:5432/${DB_NAME}
     username: ${DB_USER}
