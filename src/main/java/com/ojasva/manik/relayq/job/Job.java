@@ -1,6 +1,5 @@
 package com.ojasva.manik.relayq.job;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.ojasva.manik.relayq.common.BaseTimeEntity;
 import com.ojasva.manik.relayq.queue.Queue;
 import com.ojasva.manik.relayq.tenant.Tenant;
@@ -38,9 +37,9 @@ public class Job extends BaseTimeEntity {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "payload", nullable = false, columnDefinition = "jsonb")
-    private JsonNode payload;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private String payload;
 
     @Column(name = "priority", nullable = false)
     private int priority = 0;

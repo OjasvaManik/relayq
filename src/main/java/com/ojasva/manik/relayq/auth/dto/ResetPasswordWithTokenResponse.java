@@ -1,6 +1,6 @@
 package com.ojasva.manik.relayq.auth.dto;
 
-public record ResetPasswordResponse(
+public record ResetPasswordWithTokenResponse(
         String message
 ) {
 }

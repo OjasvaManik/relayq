@@ -1,6 +1,7 @@
 package com.ojasva.manik.relayq.auth;
 
 import com.ojasva.manik.relayq.auth.dto.*;
+import com.ojasva.manik.relayq.common.MailService;
 import com.ojasva.manik.relayq.common.exception.BadRequestException;
 import com.ojasva.manik.relayq.common.exception.ConflictException;
 import com.ojasva.manik.relayq.common.exception.ResourceNotFoundException;
@@ -35,19 +36,32 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final RedisService redisService;
+    private final MailService mailService;
 
     public AuthService(TenantRepository tenantRepository,
                        UserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
                        JwtUtils jwtUtils,
-                       RedisService redisService) {
+                       RedisService redisService,
+                       MailService mailService) {
         this.tenantRepository = tenantRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
         this.redisService = redisService;
+        this.mailService = mailService;
+    }
+
+    public static String generateTempPassword() {
+        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        SecureRandom random = new SecureRandom();
+        StringBuilder sb = new StringBuilder(12);
+        for (int i = 0; i < 12; i++) {
+            sb.append(chars.charAt(random.nextInt(chars.length())));
+        }
+        return sb.toString();
     }
 
     @Transactional
@@ -71,7 +85,7 @@ public class AuthService {
         user.setTemporaryPassword(true);
         userRepository.save(user);
 
-        // TODO: send tempPassword to email via JavaMailSender
+        mailService.sendTempPassword(request.email(), tempPassword);
         System.out.println("Temp password for " + request.email() + ": " + tempPassword);
 
         return new RegisterResponse("Account created. Check your email for your temporary password.");
@@ -111,7 +125,7 @@ public class AuthService {
         String otp = generateOtp();
         redisService.set("otp:" + request.email(), otp, OTP_TTL);
 
-        // TODO: send OTP to email via JavaMailSender
+        mailService.sendOtp(request.email(), otp);
         System.out.println("OTP for " + request.email() + ": " + otp);
     }
 
@@ -153,20 +167,28 @@ public class AuthService {
 
         String jwt = authHeader.substring(7);
         redisService.delete("session:" + jwt);
-        return new ResetPasswordResponse("Password Reset Successful. Log in Again.", jwt);
+        return new ResetPasswordResponse("Password Reset Successful. Log in Again.");
+    }
+
+    @Transactional
+    public ResetPasswordWithTokenResponse resetPasswordWithToken(ResetPasswordWithTokenRequest request) {
+        String email = redisService.get("reset_token:" + request.resetToken());
+
+        if (email == null) {
+            throw new BadRequestException("Reset token expired or not found");
+        }
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
+        userRepository.save(user);
+
+        redisService.delete("reset_token:" + request.resetToken());
+        return new ResetPasswordWithTokenResponse("Password Reset Successfully.");
     }
 
     private String generateOtp() {
         return String.format("%06d", new SecureRandom().nextInt(999999));
-    }
-
-    private String generateTempPassword() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        SecureRandom random = new SecureRandom();
-        StringBuilder sb = new StringBuilder(12);
-        for (int i = 0; i < 12; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
     }
 }

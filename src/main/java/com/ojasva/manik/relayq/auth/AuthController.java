@@ -1,9 +1,6 @@
 package com.ojasva.manik.relayq.auth;
 
-import com.ojasva.manik.relayq.auth.dto.ForgotPasswordRequest;
-import com.ojasva.manik.relayq.auth.dto.LoginRequest;
-import com.ojasva.manik.relayq.auth.dto.RegisterRequest;
-import com.ojasva.manik.relayq.auth.dto.VerifyOtpRequest;
+import com.ojasva.manik.relayq.auth.dto.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,6 +39,11 @@ public class AuthController {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOtp(@RequestBody VerifyOtpRequest request) {
         return ResponseEntity.ok(authService.verifyOtp(request));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordWithTokenRequest request) {
+        return ResponseEntity.ok(authService.resetPasswordWithToken(request));
     }
 
 }

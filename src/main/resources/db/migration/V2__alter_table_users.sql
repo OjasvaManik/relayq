@@ -1,6 +1,0 @@
-ALTER TABLE users
-    ADD COLUMN name VARCHAR(255);
-UPDATE users
-SET name = email;
-ALTER TABLE users
-    ALTER COLUMN name SET NOT NULL;

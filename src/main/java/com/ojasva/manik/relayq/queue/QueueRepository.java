@@ -13,4 +13,6 @@ public interface QueueRepository extends JpaRepository<Queue, UUID> {
     Optional<Queue> findByTenantIdAndName(UUID tenantId, String name);
 
     boolean existsByTenantIdAndName(UUID tenantId, String name);
+
+    Optional<Queue> findByIdAndTenantId(UUID id, UUID tenantId);
 }
