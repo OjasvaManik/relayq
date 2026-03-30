@@ -1,7 +1,7 @@
-# Relayq
+# RelayQ
 
 A multi-tenant job queue service built with Java and Spring Boot. Organisations submit jobs to named queues with webhook
-URLs — Relayq handles scheduling, delivery, retries, and observability.
+URLs — RelayQ handles scheduling, delivery, retries, and observability.
 
 ---
 
@@ -19,9 +19,9 @@ URLs — Relayq handles scheduling, delivery, retries, and observability.
 
 ## How It Works
 
-Relayq is a webhook-based job queue. Tenants register, create queues (each with a webhook URL), and submit jobs with a
+RelayQ is a webhook-based job queue. Tenants register, create queues (each with a webhook URL), and submit jobs with a
 payload, priority, and optional scheduled time. A background poller picks up eligible jobs every 5 seconds and POSTs the
-payload to the queue's webhook URL. The tenant's own server handles the actual execution — Relayq just ensures reliable,
+payload to the queue's webhook URL. The tenant's own server handles the actual execution — RelayQ just ensures reliable,
 ordered, retried delivery.
 
 ```
@@ -67,34 +67,27 @@ git clone https://github.com/ojasvamanik/relayq
 cd relayq
 ```
 
-Create a `.env` file in the root:
+Generate a jwt secret:
 
-```env
-DB_USER=relayq-user
-DB_PASS=relayq-pass
-DB_NAME=relayq-db
-MAIL_USERNAME=your@gmail.com
-MAIL_PASSWORD=your-app-password
+```bash
+openssl rand -base64 64
+```
+
+Create a `secrets.yaml` file in the same folder as `application.yaml`:
+
+```yaml
+DB_USER: relayq-user
+DB_PASS: relayq-pass
+DB_NAME: relayq-db
+MAIL_USERNAME: your@email.com
+MAIL_PASSWORD: your-app-password
+JWT_SECRET: your-base64-encoded-secret
 ```
 
 Start infrastructure:
 
 ```bash
 docker compose up -d
-```
-
-Add to `application.yml`:
-
-```yaml
-spring:
-  app:
-    jwtSecret: your-base64-encoded-secret
-```
-
-Generate a secret:
-
-```bash
-openssl rand -base64 64
 ```
 
 Run the application:
@@ -209,9 +202,9 @@ curl -X POST http://localhost:8080/api/v1/jobs \
 
 ### Webhook-based execution
 
-Relayq does not execute jobs itself. Instead, each queue has a `webhook_url` — when a job is ready, Relayq POSTs the
-payload to that URL and the tenant's server handles execution. This makes Relayq a pure orchestration layer with no
-coupling to business logic. Tenants can handle any job type without any changes on Relayq's side.
+RelayQ does not execute jobs itself. Instead, each queue has a `webhook_url` — when a job is ready, RelayQ POSTs the
+payload to that URL and the tenant's server handles execution. This makes RelayQ a pure orchestration layer with no
+coupling to business logic. Tenants can handle any job type without any changes on RelayQ's side.
 
 ### `SELECT FOR UPDATE SKIP LOCKED`
 
@@ -242,7 +235,7 @@ no cleanup jobs, no `expires_at` columns, no stale rows. PostgreSQL is reserved 
 ### Exponential backoff on retries
 
 Failed jobs are rescheduled with a delay of `2^retryCount * 10` seconds. A job that fails three times waits 20s, then
-40s, then 80s before each retry. This prevents a flapping webhook from hammering Relayq's poller and avoids thundering
+40s, then 80s before each retry. This prevents a flapping webhook from hammering RelayQ's poller and avoids thundering
 herd on recovery.
 
 ### Tenant isolation via JWT principal
@@ -271,9 +264,3 @@ tenants
 ```
 
 Jobs carry `tenant_id` directly (denormalised from `queue → tenant`) for fast tenant-scoped queries without joins.
-
----
-
-## License
-
-MIT
